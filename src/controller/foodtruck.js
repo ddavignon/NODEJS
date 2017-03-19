@@ -17,7 +17,8 @@ export default ({ config, db }) => {
         newFoodTruck.name = req.body.name;
         newFoodTruck.foodtype = req.body.foodtype;
         newFoodTruck.avgcost = req.body.avgcost;
-        newFoodTruck.geometry.coordinates = req.body.geometry.coordinates;
+        newFoodTruck.geometry.coordinates.lat = req.body.geometry.coordinates.lat;
+        newFoodTruck.geometry.coordinates.long = req.body.geometry.coordinates.long;
 
         newFoodTruck.save(err => {
             if (err) {
@@ -55,6 +56,10 @@ export default ({ config, db }) => {
                 res.send(err);
             }
             foodtruck.name = req.body.name;
+            foodtruck.foodtype = req.body.foodtype;
+            foodtruck.avgcost = req.body.avgcost;
+            foodtruck.geometry.coordinates.lat = req.body.geometry.coordinates.lat;
+            foodtruck.geometry.coordinates.long = req.body.geometry.coordinates.long;
             foodtruck.save(err => {
                 if (err) {
                     res.send(err);
@@ -66,14 +71,33 @@ export default ({ config, db }) => {
 
     // '/v1/foodtruck/:id' - Delete
     api.delete('/:id', authenticate, (req, res) => {
-        FoodTruck.remove({
-            _id: req.params.id
-        }, (err, foodtruck) => {
-            if(err) {
-                res.send(err);
+        FoodTruck.findById(req.params.id, (err, foodtruck) => {
+            if (err) {
+                res.status(500).send(err);
+                return;
             }
-            res.json({ message: "FoodTruck successfully removed"});
+            if (foodtruck === null) {
+                res.status(404).send("FoodTruck not found");
+                return;
+            }
+            FoodTruck.remove({
+                _id: req.params.id
+            }, (err, foodtruck) => {
+                if (err) {
+                    res.status(500).send(err);
+                    return;
+                }
+                Review.remove({
+                    foodtruck: req.params.id
+                }, (err, review) => {
+                    if (err) {
+                        res.send(err);
+                    }
+                    res.json({ message: "FoodTruck successfully removed" });
+                });
+            });
         });
+
     });
 
     // add review for a specific foodtruck id
@@ -105,8 +129,8 @@ export default ({ config, db }) => {
 
     // get reviews for a specific food truck id
     // '/v1/foodtruck/reviews/:id'
-    api.get('/reviews/:id', (req,res) => {
-        Review.find({foodtruck: req.params.id}, (err, reviews) => {
+    api.get('/reviews/:id', (req, res) => {
+        Review.find({ foodtruck: req.params.id }, (err, reviews) => {
             if (err) {
                 return res.send(err);
             }
@@ -118,7 +142,7 @@ export default ({ config, db }) => {
     // get all foodtrucks that have a certain food type
     // '/v1/foodtruck/foodtype/:foodtype
     api.get('/foodtype/:foodtype', (req, res) => {
-        FoodTruck.find({ foodtype: req.params.foodtype}, (err, foodtruck) => {
+        FoodTruck.find({ foodtype: req.params.foodtype }, (err, foodtruck) => {
             if (err) {
                 return res.send(err);
             }
