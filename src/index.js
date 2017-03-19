@@ -30,7 +30,10 @@ passport.serializeUser(Account.serializeUser());
 passport.deserializeUser(Account.deserializeUser());
 
 // api routes v1
-app.use('/v1', routes);
+app.use('/api/v1', routes);
+
+//home
+//app.use('/', routes);
 
 app.server.listen(config.port);
 console.log(`Started on port ${app.server.address().port}`);
